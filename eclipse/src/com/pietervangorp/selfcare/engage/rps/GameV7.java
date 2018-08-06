@@ -72,6 +72,8 @@ import org.junit.Test;
  * AutomaticPlayerV2, so the human can predict the behavior of the bot (since
  * that one makes predictable counter-attacks)
  * 
+ * Used as a demonstrator of https://integrationapi.selfcare4me.test.huss.nl/
+ * 
  * @author pvgorp
  *
  */
@@ -173,9 +175,10 @@ public class GameV7 {
                 Scanner sc = new Scanner(System.in);
                 isOK = sc.nextLine();
             } while (!isOK.trim().equalsIgnoreCase("OK"));
-
-            logger.info("Getting access code");
-            request = new HttpGet(settings.getSelfcareApiBaseURL() + "/api/requestusertoken?usercode="+ usercode);
+            
+            String url= settings.getSelfcareApiBaseURL() + "/api/auth/requestusertoken?usercode="+ usercode;
+            logger.info("Getting access code via "+url);
+            request = new HttpGet(url);
             request.addHeader("Authorization", "Bearer " + appKey);
        
             
@@ -188,12 +191,13 @@ public class GameV7 {
             if (httpResponse.getStatusLine().getStatusCode() == 200) {
                 String res = EntityUtils.toString(httpResponse.getEntity());
                 AuthRequestusertokenResponse response = new Gson().fromJson(res, AuthRequestusertokenResponse.class);
+                logger.info("Access code retrieved: "+response.getAccesstoken());
                 
                 settings.setSelfcareAccessToken(response.getAccesstoken());
                 settings.setConsent(true, consentUrl);
             } else {
                 logger.log(Level.SEVERE,
-                        "You did not give proper consent. Please restart the app.");
+                        "You did not give proper consent. Please restart the app and do give explicit approval via the webpage at the given URL.");
                 throw new NoConsentException();                
             }
         }
@@ -201,7 +205,11 @@ public class GameV7 {
     }
 
     public void doGame() {
+        
         String howto = "Please enter once one of {paper,rock,scissors} to play";
+        
+        // TODO compute start date/time here (to be used to compute duration of a game0
+        
         System.out.println(howto);
         Scanner s = new Scanner(System.in);
         Item i1 = null;
@@ -237,6 +245,9 @@ public class GameV7 {
             }
         } while (result != GameResult.P1WON && result != GameResult.P2WON);
         s.close();
+        // TODO compute start date/time here (to be used to compute duration of a game0
+        
+        // TODO: submit duration to Selfcare engage
     }
 
     private enum GameResult {
