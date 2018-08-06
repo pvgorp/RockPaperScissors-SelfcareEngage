@@ -80,20 +80,17 @@ public class GameV7 {
   
   public GameV7() {
       try {
+          // String settingsFile= "Settings-Confidential.json";
+          String settingsFile= "Settings.json";
           settings = new Gson().fromJson(
-                  new BufferedReader(new InputStreamReader(Thread.currentThread().getContextClassLoader().getResourceAsStream("Settings.json"))),
+                  new BufferedReader(new InputStreamReader(Thread.currentThread().getContextClassLoader().getResourceAsStream(settingsFile))),
                   Settings.class);
           logger.info("API base: "+settings.getSelfcareApiBaseURL());
           
           logger.info("Getting app key");
-          
-          if ("".equals(settings.getSelfcareApiUser())) { // no API usn/pass, then use statically provided app key
-              appKey=settings.getSelfcareAppKey();
-              if ("".equals(appKey)) {
-                  logger.log(Level.SEVERE, "No API credentials, so cannot connect to Selfcare Engage");
-                  return; // or system exit, or throw run-time error
-              }
-          } else {
+                    
+          if (settings.getSelfcareApiUser()!=null && settings.getSelfcareApiUser()!="") {
+              logger.info("using API usn/pass from settings file");
               AuthTokenBody body= new AuthTokenBody();
               body.setUsername(settings.getSelfcareApiUser());
               body.setPassword(settings.getSelfcareApiPassword());
@@ -113,12 +110,20 @@ public class GameV7 {
                   if (httpResponse.getStatusLine().getStatusCode() == 200) {
                     String minitorJson = EntityUtils.toString(httpResponse.getEntity());
                     AuthTokenResponse response = new Gson().fromJson(minitorJson, AuthTokenResponse.class);
-                    logger.info("Token: "+response.getAccess_token());
+                    appKey= response.getAccess_token();
                   }
                 } catch (Exception e) {
                   throw e;
-                }
+                }             
+          } else { // empty or null
+              logger.info("no API usn/pass, then use statically provided app key");
+              appKey=settings.getSelfcareAppKey();
+              if ("".equals(appKey)) {
+                  logger.log(Level.SEVERE, "No API credentials, so cannot connect to Selfcare Engage");
+                  return; // or system exit, or throw run-time error
+              }
           }
+          logger.info("Token: "+ appKey);
           
           if (settings.getConsent()==null || !settings.getConsent().isApproved() || "".equals(settings.getConsent().getConsentURL()) ) {              
               // TODO: get URL via CLI (preferably via helper method)

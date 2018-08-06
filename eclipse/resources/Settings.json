@@ -1,6 +1,4 @@
 {
-"selfcareApiBaseURL":"https://integrationapi.selfcare4me.test.huss.nl/",
-"selfcareApiUser":"testPVG3user@gamebus.eu",
-"selfcareApiPassword":"$QAwRV$68gT%dUX%7X@3HXR$c^U!XX$&wPq2",
-"selfcareAppKey":""
+	"selfcareApiBaseURL": "https://integrationapi.selfcare4me.test.huss.nl/",
+	"selfcareAppKey": "9dd4448edaf74e49903e7a2249c40774"
 }
