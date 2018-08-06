@@ -1,9 +1,9 @@
-package com.pietervangorp.selfcare.engage;
+package com.pietervangorp.selfcare.engage.rps;
 
-import com.pietervangorp.selfcare.engage.ai.AutomaticPlayer;
-import com.pietervangorp.selfcare.engage.ai.AutomaticPlayerV1;
-import com.pietervangorp.selfcare.engage.ai.AutomaticPlayerV2;
-import com.pietervangorp.selfcare.engage.items.*;
+import com.pietervangorp.selfcare.engage.rps.ai.AutomaticPlayer;
+import com.pietervangorp.selfcare.engage.rps.ai.AutomaticPlayerV1;
+import com.pietervangorp.selfcare.engage.rps.ai.AutomaticPlayerV2;
+import com.pietervangorp.selfcare.engage.rps.items.Item;
 
 /**
  * Rock/paper/scissors game where a human plays against the V2 bot (which can predicted in its counter-attacks)

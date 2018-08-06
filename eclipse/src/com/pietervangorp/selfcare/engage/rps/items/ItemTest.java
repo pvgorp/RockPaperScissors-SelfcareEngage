@@ -1,4 +1,4 @@
-package com.pietervangorp.selfcare.engage.items;
+package com.pietervangorp.selfcare.engage.rps.items;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;

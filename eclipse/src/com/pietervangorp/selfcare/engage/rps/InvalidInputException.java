@@ -1,4 +1,4 @@
-package com.pietervangorp.selfcare.engage;
+package com.pietervangorp.selfcare.engage.rps;
 
 public class InvalidInputException extends Exception {
   String input= "no input";

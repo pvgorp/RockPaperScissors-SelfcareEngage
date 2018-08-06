@@ -1,34 +1,31 @@
-package com.pietervangorp.selfcare.engage;
+package com.pietervangorp.selfcare.engage.rps;
 
 import java.util.Scanner;
 
-import com.pietervangorp.selfcare.engage.ai.AutomaticPlayer;
-import com.pietervangorp.selfcare.engage.ai.AutomaticPlayerV2;
-import com.pietervangorp.selfcare.engage.items.*;
+import com.pietervangorp.selfcare.engage.rps.ai.AutomaticPlayer;
+import com.pietervangorp.selfcare.engage.rps.ai.AutomaticPlayerV1;
+import com.pietervangorp.selfcare.engage.rps.items.Item;
 
 /**
  * Reasonably realistic rock/paper/scissors game: taking one player input 
  * and comparing it against a random computer pick until one of both wins.
  * 
- * Opposed to V3, in this variant the human is playing against the AutomaticPlayerV2,
- * so the human can predict the behavior of the bot (since that one makes predictable counter-attacks)
- * 
  * @author pvgorp
  *
  */
-public class GameV7 {
+public class GameV3 {
 
   private enum GameResult {
     UNDECIDED, P1WON, P2WON, TIE
   }
 
   public static void main(String[] args) {
-    String howto = "Please enter once one of {paper,rock,scissors} to play"; 
+    String howto = "Please enter once one of {paper,rock,scissors} to play"; // CHANGED
     System.out.println(howto);
     Scanner s = new Scanner(System.in);
     Item i1 = null;
     Item i2 = null;
-    AutomaticPlayer player2= new AutomaticPlayerV2(); // ONLY DIFFERENCE TO V3 
+    AutomaticPlayer player2= new AutomaticPlayerV1(); // NEW 
     GameResult result = GameResult.UNDECIDED;
     int round= 1;
     do {
@@ -37,17 +34,16 @@ public class GameV7 {
         try {
           System.out.println("Player 1: please enter your choice");
           i1 = ItemFactory.toItem(s.next());          
-          i2 = player2.play(); 
-          player2.considerOpponentItem(i1); // NEW
+          i2 = player2.play(); // CHANGED
         } catch (InvalidInputException e) {
           System.out.println(e);
           System.out.println(howto);
         }
       } while (i1 == null || i2 == null);
-      System.out.println("You selected " + i1); 
-      System.out.println("Your computer opponent selected " + i2); 
+      System.out.println("You selected " + i1); // CHANGED
+      System.out.println("Your computer opponent selected " + i2); // CHANGED
       if (i1.beats(i2)) {
-        System.out.println("You win");  
+        System.out.println("You win");  // CHANGED
         result = GameResult.P1WON;
       } else if (i2.beats(i1)) {
         System.out.println("You loose");
@@ -57,5 +53,6 @@ public class GameV7 {
         result = GameResult.TIE;
       }
     } while (result != GameResult.P1WON && result != GameResult.P2WON);
+    s.close();
   }
 }

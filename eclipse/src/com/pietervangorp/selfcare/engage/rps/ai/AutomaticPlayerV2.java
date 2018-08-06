@@ -1,9 +1,11 @@
-package com.pietervangorp.selfcare.engage.ai;
+package com.pietervangorp.selfcare.engage.rps.ai;
 
-import java.awt.PageAttributes;
-import java.util.*;
+import java.util.Vector;
 
-import com.pietervangorp.selfcare.engage.items.*;
+import com.pietervangorp.selfcare.engage.rps.items.Item;
+import com.pietervangorp.selfcare.engage.rps.items.Paper;
+import com.pietervangorp.selfcare.engage.rps.items.Rock;
+import com.pietervangorp.selfcare.engage.rps.items.Scissors;
 
 /**
  * An automatic player implementation that tries to beat the opponent brute force.

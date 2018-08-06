@@ -1,6 +1,6 @@
-package com.pietervangorp.selfcare.engage;
+package com.pietervangorp.selfcare.engage.rps;
 
-import com.pietervangorp.selfcare.engage.items.*;
+import com.pietervangorp.selfcare.engage.rps.items.*;
 
 public class ItemFactory {
   public static Item toItem(String input) throws InvalidInputException {

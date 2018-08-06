@@ -1,8 +1,8 @@
-package com.pietervangorp.selfcare.engage;
+package com.pietervangorp.selfcare.engage.rps;
 
 import java.util.Scanner;
 
-import com.pietervangorp.selfcare.engage.items.*;
+import com.pietervangorp.selfcare.engage.rps.items.Item;
 
 /**
  * Very basic support for the rock/paper/scissors game: taking two player inputs
@@ -52,5 +52,6 @@ public class GameV2 {
         result = GameResult.TIE;
       }
     } while (result != GameResult.P1WON && result != GameResult.P2WON);
+    s.close();
   }
 }

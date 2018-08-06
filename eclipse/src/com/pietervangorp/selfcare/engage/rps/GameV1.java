@@ -1,9 +1,8 @@
-package com.pietervangorp.selfcare.engage;
+package com.pietervangorp.selfcare.engage.rps;
 
-import java.util.InputMismatchException;
 import java.util.Scanner;
 
-import com.pietervangorp.selfcare.engage.items.*;
+import com.pietervangorp.selfcare.engage.rps.items.Item;
 /**
  * Very basic support for the rock/paper/scissors game:
  * taking two player inputs and indicating whether someone has one.
@@ -38,5 +37,6 @@ public class GameV1 {
     } else {
       System.out.println("Nobody wins");
     }
-  }
+    s.close();
+  }  
 }

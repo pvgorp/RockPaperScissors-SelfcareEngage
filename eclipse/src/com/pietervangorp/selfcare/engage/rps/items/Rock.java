@@ -1,4 +1,4 @@
-package com.pietervangorp.selfcare.engage.items;
+package com.pietervangorp.selfcare.engage.rps.items;
 
 public class Rock implements Item {
   @Override
