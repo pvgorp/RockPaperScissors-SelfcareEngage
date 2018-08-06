@@ -111,9 +111,9 @@ public class GameV7 {
             entity.setContentType("application/json");
             request.setEntity(entity);
 
-            // HttpClient httpClient = HttpClientBuilder.create().build(); //
+            HttpClient httpClient = HttpClientBuilder.create().build(); //
             // FIXME: should use this one in production!!
-            HttpClient httpClient = hack.httpClientTrustingAllSSLCerts(); // FIXME:
+            // HttpClient httpClient = hack.httpClientTrustingAllSSLCerts(); // FIXME:
                                                                           // never
                                                                           // use
                                                                           // this
@@ -145,9 +145,9 @@ public class GameV7 {
             HttpGet request = new HttpGet(settings.getSelfcareApiBaseURL() + "/api/url");
             request.addHeader("Authorization", "Bearer " + appKey);
 
-            // HttpClient httpClient = HttpClientBuilder.create().build(); //
+            HttpClient httpClient = HttpClientBuilder.create().build(); //
             // FIXME: should use this one in production!!
-            HttpClient httpClient = hack.httpClientTrustingAllSSLCerts(); // FIXME:
+            // HttpClient httpClient = hack.httpClientTrustingAllSSLCerts(); // FIXME:
                                                                           // never
                                                                           // use
                                                                           // this
@@ -182,9 +182,9 @@ public class GameV7 {
             request.addHeader("Authorization", "Bearer " + appKey);
        
             
-            // HttpClient httpClient = HttpClientBuilder.create().build(); //
+            httpClient = HttpClientBuilder.create().build(); //
             // FIXME: should use this one in production!!
-            httpClient = hack.httpClientTrustingAllSSLCerts(); // FIXME: never
+            // httpClient = hack.httpClientTrustingAllSSLCerts(); // FIXME: never
                                                                // use this in
                                                                // production!!
             httpResponse = httpClient.execute(request);

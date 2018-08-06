@@ -1,1 +1,1 @@
-sudo keytool -import -v -trustcacerts -alias test.huss.nl -file \*.test.huss.nl.cer -keystore $(/usr/libexec/java_home)/jre/lib/security/cacerts -keypass changeit -storepass changeit
+sudo keytool -import -v -trustcacerts -alias test2.huss.nl -file myserver.crt -keystore $(/usr/libexec/java_home)/jre/lib/security/cacerts -keypass changeit -storepass changeit
