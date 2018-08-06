@@ -6,5 +6,9 @@
 	<classpathentry kind="lib" path="lib/lombok.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
+	<classpathentry kind="lib" path="/Users/pvgorp/Dropbox/git/RockPaperScissors-SelfcareEngage-new/eclipse/lib/httpclient-4.5.6.jar"/>
+	<classpathentry kind="lib" path="/Users/pvgorp/Dropbox/git/RockPaperScissors-SelfcareEngage-new/eclipse/lib/commons-io-2.6.jar"/>
+	<classpathentry kind="lib" path="/Users/pvgorp/Dropbox/git/RockPaperScissors-SelfcareEngage-new/eclipse/lib/httpcore-4.4.10.jar"/>
+	<classpathentry kind="lib" path="/Users/pvgorp/Dropbox/git/RockPaperScissors-SelfcareEngage-new/eclipse/lib/commons-logging-1.2.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
