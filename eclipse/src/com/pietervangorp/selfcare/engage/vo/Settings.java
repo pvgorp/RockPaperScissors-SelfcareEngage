@@ -8,7 +8,9 @@ import lombok.Data;
 
 @Data
 public class Settings {
+     
     private String selfcareApiBaseURL;
+    private boolean ignoreSslCertificateValidity= false;
     
     private String selfcareApiUser;
     private String selfcareApiPassword;
@@ -28,11 +30,13 @@ public class Settings {
         }
     }
     
-    private Consent consent;
+    private Consent consent;    
     
     public void setConsent(boolean approved, String url) {
         consent= new Consent(approved, url);
     }
+    
+    private String gameDataFileLocation; // pointing for example to RockPapperScissors-Data.json or to /home/pvgorp/RockPapperScissors-Data.json
 }
 
 

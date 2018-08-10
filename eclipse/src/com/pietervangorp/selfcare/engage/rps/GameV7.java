@@ -3,15 +3,22 @@ package com.pietervangorp.selfcare.engage.rps;
 import static org.junit.Assert.assertEquals;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.Reader;
 import java.util.Scanner;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.pietervangorp.selfcare.engage.exceptions.NoConsentException;
 import com.pietervangorp.selfcare.engage.rps.ai.AutomaticPlayer;
 import com.pietervangorp.selfcare.engage.rps.ai.AutomaticPlayerV2;
 import com.pietervangorp.selfcare.engage.rps.items.Item;
+import com.pietervangorp.selfcare.engage.rps.vo.RockPaperScissorsGame;
+import com.pietervangorp.selfcare.engage.vo.GameSession;
 import com.pietervangorp.selfcare.engage.vo.Settings;
 import com.pietervangorp.selfcare.engage.vo.requesthelpers.ApiUrlResponse;
 import com.pietervangorp.selfcare.engage.vo.requesthelpers.AuthRequestusertokenResponse;
@@ -27,6 +34,7 @@ import javax.net.ssl.X509TrustManager;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.io.Writer;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
@@ -87,11 +95,19 @@ public class GameV7 {
 
     public GameV7() throws Exception {
 
-        // String settingsFile= "Settings-Confidential.json";
-        String settingsFile = "Settings.json";
+        String settingsFile = "Settings-RPS.json";
+        String outputSettingsFile = "My-"+settingsFile;
+        Reader reader;
+        if (new File(outputSettingsFile).isFile()) {
+            settingsFile= outputSettingsFile; // use file that was written by previous run
+            reader= new InputStreamReader(new FileInputStream(settingsFile));
+            logger.info("Using settings from "+new File(settingsFile).getAbsolutePath());
+        } else {
+            reader= new BufferedReader(new InputStreamReader( // read from resources folder
+                    Thread.currentThread().getContextClassLoader().getResourceAsStream(settingsFile)));
+        }
         settings = new Gson().fromJson(
-                new BufferedReader(new InputStreamReader(
-                        Thread.currentThread().getContextClassLoader().getResourceAsStream(settingsFile))),
+                reader,
                 Settings.class);
         logger.info("API base: " + settings.getSelfcareApiBaseURL());
 
@@ -111,33 +127,28 @@ public class GameV7 {
             entity.setContentType("application/json");
             request.setEntity(entity);
 
-            HttpClient httpClient = HttpClientBuilder.create().build(); //
-            // FIXME: should use this one in production!!
-            // HttpClient httpClient = hack.httpClientTrustingAllSSLCerts(); // FIXME:
-                                                                          // never
-                                                                          // use
-                                                                          // this
-                                                                          // in
-                                                                          // production!!
+            HttpClient httpClient= hack.getClient(); 
+            
             HttpResponse httpResponse = httpClient.execute(request);
             if (httpResponse.getStatusLine().getStatusCode() == 200) {
                 String res = EntityUtils.toString(httpResponse.getEntity());
                 AuthTokenResponse response = new Gson().fromJson(res, AuthTokenResponse.class);
                 appKey = response.getAccess_token();
+                settings.setSelfcareAppKey(appKey);
+                logger.info("App key retrieved and stored in settings file" );
             } else {
                 logger.log(Level.SEVERE, "No App Key, so cannot connect to Selfcare Engage");
                 throw new NoConsentException();
             }
 
         } else { // empty or null
-            logger.info("no API usn/pass, then use statically provided app key");
+            logger.info("No API usn/pass, then use statically provided app key");
             appKey = settings.getSelfcareAppKey();
             if ("".equals(appKey)) {
                 logger.log(Level.SEVERE, "No API credentials, so cannot connect to Selfcare Engage");
                 throw new NoConsentException();
             }
-        }
-        logger.info("App key: " + appKey);
+        }        
 
         String consentUrl = "https://void";
         if (settings.getConsent() == null || !settings.getConsent().isApproved()
@@ -145,14 +156,8 @@ public class GameV7 {
             HttpGet request = new HttpGet(settings.getSelfcareApiBaseURL() + "/api/url");
             request.addHeader("Authorization", "Bearer " + appKey);
 
-            HttpClient httpClient = HttpClientBuilder.create().build(); //
-            // FIXME: should use this one in production!!
-            // HttpClient httpClient = hack.httpClientTrustingAllSSLCerts(); // FIXME:
-                                                                          // never
-                                                                          // use
-                                                                          // this
-                                                                          // in
-                                                                          // production!!
+            HttpClient httpClient= hack.getClient(); 
+            
             String usercode="";
             
             HttpResponse httpResponse = httpClient.execute(request);
@@ -180,35 +185,39 @@ public class GameV7 {
             logger.info("Getting access code via "+url);
             request = new HttpGet(url);
             request.addHeader("Authorization", "Bearer " + appKey);
-       
+                   
+            httpClient= hack.getClient(); 
             
-            httpClient = HttpClientBuilder.create().build(); //
-            // FIXME: should use this one in production!!
-            // httpClient = hack.httpClientTrustingAllSSLCerts(); // FIXME: never
-                                                               // use this in
-                                                               // production!!
             httpResponse = httpClient.execute(request);
             if (httpResponse.getStatusLine().getStatusCode() == 200) {
                 String res = EntityUtils.toString(httpResponse.getEntity());
-                AuthRequestusertokenResponse response = new Gson().fromJson(res, AuthRequestusertokenResponse.class);
-                logger.info("Access code retrieved: "+response.getAccesstoken());
+                AuthRequestusertokenResponse response = new Gson().fromJson(res, AuthRequestusertokenResponse.class);                
                 
                 settings.setSelfcareAccessToken(response.getAccesstoken());
+                logger.info("Access code retrieved and stored in settings file");
+                
                 settings.setConsent(true, consentUrl);
+                
+                // now write back to file
+                Writer writer = new FileWriter(outputSettingsFile);
+                new Gson().toJson(settings, writer);
+                writer.close();
             } else {
                 logger.log(Level.SEVERE,
                         "You did not give proper consent. Please restart the app and do give explicit approval via the webpage at the given URL.");
                 throw new NoConsentException();                
             }
-        }
-
+        } else {
+            logger.info("Leveraging previously given consent (and corresponding access code)");
+        }        
     }
 
     public void doGame() {
         
         String howto = "Please enter once one of {paper,rock,scissors} to play";
-        
-        // TODO compute start date/time here (to be used to compute duration of a game0
+                
+        RockPaperScissorsGame rps= new RockPaperScissorsGame();
+        rps.setStartTimeMS(System.currentTimeMillis());
         
         System.out.println(howto);
         Scanner s = new Scanner(System.in);
@@ -218,6 +227,7 @@ public class GameV7 {
                                                            // V3
         GameResult result = GameResult.UNDECIDED;
         int round = 1;
+        
         do {
             System.out.println("Round " + round++);
             do {
@@ -245,9 +255,13 @@ public class GameV7 {
             }
         } while (result != GameResult.P1WON && result != GameResult.P2WON);
         s.close();
-        // TODO compute start date/time here (to be used to compute duration of a game0
         
+        rps.setEndTimeMS(System.currentTimeMillis());
+        rps.setDurationMillseconds(rps.getEndTimeMS()-rps.getStartTimeMS());
+        rps.setNumberOfIterations(round-1);
+        // Note: do not get gameDataFileLocation from settings (it does not seem needed as long as we do not want to failover potential connection problems of the API)
         // TODO: submit duration to Selfcare engage
+        logger.info("Game Complete");
     }
 
     private enum GameResult {
@@ -270,21 +284,29 @@ public class GameV7 {
      * https://stackoverflow.com/questions/2308774/httpget-with-https-
      * sslpeerunverifiedexception
      */
-    private HttpClientTrustingAllCertsTest hack = new HttpClientTrustingAllCertsTest();
+    private FlexibleHttpClient hack = new FlexibleHttpClient();
 
-    public class HttpClientTrustingAllCertsTest {
-
+    public class FlexibleHttpClient {
+        
+        public HttpClient getClient() throws Exception {
+            if (settings.isIgnoreSslCertificateValidity()) {
+                return httpClientTrustingAllSSLCerts();                
+            } else {
+                return HttpClientBuilder.create().build();
+            }
+        }
+        
         @Test
         public void shouldAcceptUnsafeCerts() throws Exception {
-            DefaultHttpClient httpclient = httpClientTrustingAllSSLCerts();
+            HttpClient httpclient = httpClientTrustingAllSSLCerts();
             HttpGet httpGet = new HttpGet("https://host_with_self_signed_cert");
             HttpResponse response = httpclient.execute(httpGet);
             assertEquals("HTTP/1.1 200 OK", response.getStatusLine().toString());
         }
 
-        private DefaultHttpClient httpClientTrustingAllSSLCerts()
+        private HttpClient httpClientTrustingAllSSLCerts()
                 throws NoSuchAlgorithmException, KeyManagementException {
-            DefaultHttpClient httpclient = new DefaultHttpClient();
+            HttpClient httpclient = new DefaultHttpClient();
 
             SSLContext sc = SSLContext.getInstance("SSL");
             sc.init(null, getTrustingManager(), new java.security.SecureRandom());

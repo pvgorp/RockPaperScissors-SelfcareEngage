@@ -1,0 +1,6 @@
+{
+	"selfcareApiBaseURL": "https://integrationapi.selfcare4me.test.huss.nl/",
+	"selfcareAppKey": "591f49ec7cf54072b5ee12894606c44d",
+	"ignoreSslCertificateValidity": "true",
+	"gameDataFileLocation":"/Users/pvgorp/Dropbox/git/RockPaperScissors-SelfcareEngage-new/eclipse/data/game-data.json"
+}
