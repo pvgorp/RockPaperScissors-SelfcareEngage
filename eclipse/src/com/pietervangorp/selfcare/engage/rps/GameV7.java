@@ -175,11 +175,12 @@ public class GameV7 {
             System.out.println("Please go to " + consentUrl + " and give your consent via that webpage.");
 
             String isOK = "";
+            Scanner sc = new Scanner(System.in);
             do {
-                System.out.println("Please type OK below when done.");
-                Scanner sc = new Scanner(System.in);
+                System.out.println("Please type OK below when done.");                
                 isOK = sc.nextLine();
             } while (!isOK.trim().equalsIgnoreCase("OK"));
+            sc.close();
             
             String url= settings.getSelfcareApiBaseURL() + "/api/auth/requestusertoken?usercode="+ usercode;
             logger.info("Getting access code via "+url);
@@ -260,7 +261,7 @@ public class GameV7 {
         rps.setDurationMillseconds(rps.getEndTimeMS()-rps.getStartTimeMS());
         rps.setNumberOfIterations(round-1);
         // Note: do not get gameDataFileLocation from settings (it does not seem needed as long as we do not want to failover potential connection problems of the API)
-        // TODO: submit duration to Selfcare engage
+        
         logger.info("Game Complete");
     }
 

@@ -4,7 +4,7 @@ import com.pietervangorp.selfcare.engage.vo.GameSession;
 
 import lombok.Data;
 
-@Data
+@Data  
 public class RockPaperScissorsGame extends GameSession {
     /**
      * represents the number of times that a rock/paper/scissor was drawn (across both players)

@@ -7,5 +7,5 @@ public class AuthTokenResponse {
     private String access_token;
     private String token_type= "bearer";
     private String expires_in; 
-    private String refresh_token;
+    private String refresh_token; 
 }

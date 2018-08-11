@@ -6,7 +6,7 @@ import lombok.Data;
  * Created by git@pietervangorp.com on 8/6/2018.
  */
 
-@Data
+@Data 
 public class Settings {
      
     private String selfcareApiBaseURL;

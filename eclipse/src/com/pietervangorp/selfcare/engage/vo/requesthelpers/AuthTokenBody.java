@@ -2,7 +2,7 @@ package com.pietervangorp.selfcare.engage.vo.requesthelpers;
 
 import lombok.Data;
 
-@Data
+@Data 
 public class AuthTokenBody {
     private String username;
     private String password;
