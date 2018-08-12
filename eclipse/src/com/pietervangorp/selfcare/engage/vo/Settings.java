@@ -1,5 +1,8 @@
 package com.pietervangorp.selfcare.engage.vo;
 
+import com.pietervangorp.selfcare.engage.exceptions.NoSuchSensorException;
+import com.pietervangorp.selfcare.engage.vo.requesthelpers.ApiSensortypesResponse;
+
 import lombok.Data;
 
 /**
@@ -36,7 +39,18 @@ public class Settings {
         consent= new Consent(approved, url);
     }
     
-    private String gameDataFileLocation; // pointing for example to RockPapperScissors-Data.json or to /home/pvgorp/RockPapperScissors-Data.json
+    // private String gameDataFileLocation; // pointing for example to RockPapperScissors-Data.json or to /home/pvgorp/RockPapperScissors-Data.json
+    
+    private ApiSensortypesResponse[] sensorsOfApp;
+    
+    public String getAppIdByName(String name) throws NoSuchSensorException {
+    	for (ApiSensortypesResponse sensor: sensorsOfApp) {
+    		if (name.equalsIgnoreCase(sensor.getName())) {
+    			return sensor.getSensortypeid();
+    		}
+    	}
+    	throw new NoSuchSensorException();
+    }
 }
 
 

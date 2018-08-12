@@ -1,0 +1,17 @@
+{
+    "selfcareApiBaseURL": "https://integrationapi.selfcare4me.test.huss.nl/",
+    "ignoreSslCertificateValidity": true,
+    "selfcareAppKey": "591f49ec7cf54072b5ee12894606c44d",
+    "selfcareAccessToken": "057cde7b8384413ab28a090ada07098f",
+    "consent": {
+        "approved": true,
+        "consentURL": "https://selfcare4me.test.huss.nl/connect/Appconnect.aspx?appid\u003d5b6d82f8033bee11d4006b34\u0026usercode\u003db9e1f5a9db1442ecab09eb6f2a0a134c"
+    },
+    "sensorsOfApp": [{
+        "appid": "5b6d82f8033bee11d4006b34",
+        "sensortypeid": "ed3f2f6a-0076-4513-9fa3-88e75a198b56",
+        "name": "gewonnen?",
+        "unit": "waar of vals",
+        "isdraft": "false"
+    }]
+}
