@@ -2,6 +2,7 @@ package com.pietervangorp.selfcare.engage.rps;
 
 import static org.junit.Assert.assertEquals;
 
+import java.util.List;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -9,6 +10,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Scanner;
 import java.util.TimeZone;
@@ -24,7 +26,8 @@ import com.pietervangorp.selfcare.engage.vo.GameSession;
 import com.pietervangorp.selfcare.engage.vo.Settings;
 import com.pietervangorp.selfcare.engage.vo.requesthelpers.ApiSensortypesResponse;
 import com.pietervangorp.selfcare.engage.vo.requesthelpers.ApiUrlResponse;
-import com.pietervangorp.selfcare.engage.vo.requesthelpers.ApiUserMeasuredvaluesBody;
+import com.pietervangorp.selfcare.engage.vo.requesthelpers.measuredvalues.ApiUserMeasuredvaluesResult;
+import com.pietervangorp.selfcare.engage.vo.requesthelpers.measuredvalues.SensorValue;
 import com.pietervangorp.selfcare.engage.vo.requesthelpers.AuthRequestusertokenResponse;
 import com.pietervangorp.selfcare.engage.vo.requesthelpers.AuthTokenBody;
 import com.pietervangorp.selfcare.engage.vo.requesthelpers.AuthTokenResponse;
@@ -306,7 +309,7 @@ public class GameV7 {
 		// API)
 
 		logger.info("Sending game result to Selfcare");
-		ApiUserMeasuredvaluesBody bodyArrElBasic = new ApiUserMeasuredvaluesBody();
+		SensorValue bodyArrElBasic = new SensorValue();
 		bodyArrElBasic.setActivity("Game: Rock Paper Scissors");
 		bodyArrElBasic.setSensorTypeId(settings.getSensorTypeIdByName("gewonnen?"));
 		bodyArrElBasic.setTimestamp(DateFormatter.toSelfcareDateTime(endDate));
@@ -318,7 +321,7 @@ public class GameV7 {
 		} else { // other won, or result undecided
 			bodyArrElBasic.setValue("0");
 		}
-		ApiUserMeasuredvaluesBody[] body = { bodyArrElBasic };
+		SensorValue[] body = { bodyArrElBasic };
 		String jsonPayload= new Gson().toJson(body);
 		
 		HttpResponse httpResponse = doPostForUser(jsonPayload, "/api/user/measuredvalues");
@@ -336,13 +339,13 @@ public class GameV7 {
 		}
 		
 		logger.info("Sending complex game result to Selfcare");
-		ApiUserMeasuredvaluesBody bodyArrElComplex = new ApiUserMeasuredvaluesBody();
+		SensorValue bodyArrElComplex = new SensorValue();
 		bodyArrElComplex.setActivity("Game: Rock Paper Scissors");
 		bodyArrElComplex.setSensorTypeId(settings.getSensorTypeIdByName("Rock Paper Scissors Game Session"));
 		bodyArrElComplex.setTimestamp(DateFormatter.toSelfcareDateTime(endDate));
 		bodyArrElComplex.setValue(new Gson().toJson(rps));
 		
-		ApiUserMeasuredvaluesBody[] bodyComplex = { bodyArrElComplex };
+		SensorValue[] bodyComplex = { bodyArrElComplex };
 		String jsonPayloadComplex= new Gson().toJson(bodyComplex);
 		
 		HttpResponse httpResponseComplex = doPostForUser(jsonPayloadComplex, "/api/user/storedvalues");
@@ -396,8 +399,20 @@ public class GameV7 {
 	 * Dump user data to log (info level)
 	 * @throws Exception 
 	 */
-	private void dumpUserData() throws Exception {		
-		String url= settings.getSelfcareApiBaseURL() + "/api/user/measuredvalues";
+	private void dumpUserData() throws Exception {
+		final Calendar cal = Calendar.getInstance();
+		
+	    cal.add(Calendar.DATE, -1);	   	    
+		Date yesterday= cal.getTime();
+		
+		cal.add(Calendar.DATE, +2);
+		Date tomorrow= cal.getTime();
+		
+		String url= settings.getSelfcareApiBaseURL() 
+					+ "/api/user/measuredvalues?startdate="+DateFormatter.toSelfcareDateTime(yesterday)
+					+"&enddate="+DateFormatter.toSelfcareDateTime(tomorrow)
+					+"&sensortypeid="+settings.getSensorTypeIdByName("gewonnen?");
+		
 		logger.info("Getting basic sensor data via " + url);
 		HttpGet request = new HttpGet(url);
 		request.addHeader("Authorization", "Bearer " + settings.getSelfcareAccessToken());
@@ -406,7 +421,8 @@ public class GameV7 {
 		
 		if (httpResponse.getStatusLine().getStatusCode() == 200) {
 			String res = EntityUtils.toString(httpResponse.getEntity());
-			//TODO ApiSensortypesResponse[] sensorTypes = new Gson().fromJson(res, ApiSensortypesResponse[].class);			
+			ApiUserMeasuredvaluesResult measuredValues= new Gson().fromJson(res, ApiUserMeasuredvaluesResult.class);
+			logger.info("User data available so far: \n"+new Gson().toJson(measuredValues.getValueList()));
 		} else {
 			logger.log(Level.SEVERE, "Reading of Sensor Data failed");
 			throw new Exception();
