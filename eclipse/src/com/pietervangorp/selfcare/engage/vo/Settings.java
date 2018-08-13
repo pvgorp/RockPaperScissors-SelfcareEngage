@@ -9,7 +9,7 @@ import lombok.Data;
  * Created by git@pietervangorp.com on 8/6/2018.
  */
 
-@Data 
+@Data  
 public class Settings {
      
     private String selfcareApiBaseURL;
@@ -40,17 +40,31 @@ public class Settings {
     }
     
     // private String gameDataFileLocation; // pointing for example to RockPapperScissors-Data.json or to /home/pvgorp/RockPapperScissors-Data.json
+    /**
+     * Sensor types for which values will show in Selfcare graphs
+     */
+    private ApiSensortypesResponse[] basicSensorTypesOfApp;
     
-    private ApiSensortypesResponse[] sensorsOfApp;
-    
-    public String getAppIdByName(String name) throws NoSuchSensorException {
-    	for (ApiSensortypesResponse sensor: sensorsOfApp) {
-    		if (name.equalsIgnoreCase(sensor.getName())) {
-    			return sensor.getSensortypeid();
+    public String getSensorTypeIdByName(String name) throws NoSuchSensorException {
+    	// first looking in basic sensor types
+    	for (ApiSensortypesResponse sensorType: basicSensorTypesOfApp) {
+    		if (name.equalsIgnoreCase(sensorType.getName())) {
+    			return sensorType.getSensortypeid();
+    		}
+    	}
+    	// then considering complex ones
+    	for (ApiSensortypesResponse sensorType: complexSensorTypesOfApp) {
+    		if (name.equalsIgnoreCase(sensorType.getName())) {
+    			return sensorType.getSensortypeid();
     		}
     	}
     	throw new NoSuchSensorException();
     }
+    
+    /**
+     * Sensor types for which values will <b>not</b> show in Selfcare graphs. Instead, data will only be stored in the backend for developer and researcher retrieval
+     */
+    private ApiSensortypesResponse[] complexSensorTypesOfApp;
 }
 
 

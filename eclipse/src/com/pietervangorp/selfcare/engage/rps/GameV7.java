@@ -50,6 +50,8 @@ import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
+import org.apache.http.ParseException;
+import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpGet;
@@ -204,26 +206,13 @@ public class GameV7 {
 
 				settings.setConsent(true, consentUrl);
 
-				// initializing Sensor Type info
-				url = settings.getSelfcareApiBaseURL() + "/api/sensortypes";
-				logger.info("Getting sensor types code via " + url);
-				request = new HttpGet(url);
-				request.addHeader("Authorization", "Bearer " + appKey);
-
-				httpClient = hack.getClient();
-
-				httpResponse = httpClient.execute(request);
-				if (httpResponse.getStatusLine().getStatusCode() == 200) {
-					res = EntityUtils.toString(httpResponse.getEntity());
-					ApiSensortypesResponse[] sensors = new Gson().fromJson(res, ApiSensortypesResponse[].class);
-
-					settings.setSensorsOfApp(sensors);
-					logger.info("Sensors retrieved and stored in settings file");
-
-				} else {
-					logger.log(Level.SEVERE, "Reading of Sensor Config failed");
-					throw new Exception();
-				}
+				// initializing Basic Sensor Type info				
+				settings.setBasicSensorTypesOfApp(loadSensorTypesFrom(settings.getSelfcareApiBaseURL() + "/api/user/sensortypes"));
+				logger.info("Basic sensor types retrieved and stored in settings file");
+				
+				// initializing Complex Sensor Type info
+				settings.setComplexSensorTypesOfApp(loadSensorTypesFrom(settings.getSelfcareApiBaseURL() + "/api/user/datastoresensortypes"));
+				logger.info("Complex sensor types retrieved and stored in settings file");			
 
 				// now write back to file
 				Writer writer = new FileWriter(outputSettingsFile);
@@ -239,6 +228,30 @@ public class GameV7 {
 		}
 	}
 
+	/**
+	 * Helper method used for basic and complex sensor type loading
+	 * @param url
+	 * @return
+	 * @throws Exception
+	 */
+	private ApiSensortypesResponse[] loadSensorTypesFrom(String url) throws Exception {		
+		logger.info("Getting basic sensor types code via " + url);
+		HttpGet request = new HttpGet(url);
+		request.addHeader("Authorization", "Bearer " + settings.getSelfcareAccessToken());
+
+		HttpClient httpClient = hack.getClient();
+
+		HttpResponse httpResponse = httpClient.execute(request);
+		if (httpResponse.getStatusLine().getStatusCode() == 200) {
+			String res = EntityUtils.toString(httpResponse.getEntity());
+			ApiSensortypesResponse[] sensorTypes = new Gson().fromJson(res, ApiSensortypesResponse[].class);
+			return sensorTypes;
+		} else {
+			logger.log(Level.SEVERE, "Reading of Sensor Config failed");
+			throw new Exception();
+		}
+	}
+	
 	public void doGame() throws Exception {
 
 		String howto = "Please enter once one of {paper,rock,scissors} to play";
@@ -250,8 +263,7 @@ public class GameV7 {
 		Scanner s = new Scanner(System.in);
 		Item i1 = null;
 		Item i2 = null;
-		AutomaticPlayer player2 = new AutomaticPlayerV2(); // ONLY DIFFERENCE TO
-															// V3
+		AutomaticPlayer player2 = new AutomaticPlayerV2(); //  DIFFERENCE TO V3
 		GameResult result = GameResult.UNDECIDED;
 		int round = 1;
 
@@ -262,7 +274,7 @@ public class GameV7 {
 					System.out.println("Player 1: please enter your choice");
 					i1 = ItemFactory.toItem(s.next());
 					i2 = player2.play();
-					player2.considerOpponentItem(i1); // NEW
+					player2.considerOpponentItem(i1); // NEW IN V3
 				} catch (InvalidInputException e) {
 					System.out.println(e);
 					System.out.println(howto);
@@ -285,7 +297,7 @@ public class GameV7 {
 		Date endDate = new Date();
 
 		rps.setEndTimeMS(System.currentTimeMillis());
-		rps.setDurationMillseconds(rps.getEndTimeMS() - rps.getStartTimeMS());
+		rps.setDurationMilliSeconds(rps.getEndTimeMS() - rps.getStartTimeMS());
 		rps.setNumberOfIterations(round - 1);
 
 		logger.info("Game Complete");
@@ -294,33 +306,48 @@ public class GameV7 {
 		// API)
 
 		logger.info("Sending game result to Selfcare");
-		HttpPost request = new HttpPost(settings.getSelfcareApiBaseURL() + "/api/user/measuredvalues");
-		request.addHeader("Content-Type", "application/json");
-		request.addHeader("Authorization", "Bearer " + settings.getSelfcareAccessToken());
-
-		ApiUserMeasuredvaluesBody bodyArrEl = new ApiUserMeasuredvaluesBody();
-//        body.setActivity("Game: Rock Paper Scissors");
-		bodyArrEl.setSensorTypeId(settings.getAppIdByName("gewonnen?"));
-//        body.setTimestamp(DateFormatter.toSelfcareDateTime(endDate));
+		ApiUserMeasuredvaluesBody bodyArrElBasic = new ApiUserMeasuredvaluesBody();
+		bodyArrElBasic.setActivity("Game: Rock Paper Scissors");
+		bodyArrElBasic.setSensorTypeId(settings.getSensorTypeIdByName("gewonnen?"));
+		bodyArrElBasic.setTimestamp(DateFormatter.toSelfcareDateTime(endDate));
 
 		if (result.equals(GameResult.P1WON)) {
-			bodyArrEl.setValue("2");
+			bodyArrElBasic.setValue("2");
 		} else if (result.equals(GameResult.TIE)) {
-			bodyArrEl.setValue("1");
+			bodyArrElBasic.setValue("1");
 		} else { // other won, or result undecided
-			bodyArrEl.setValue("0");
+			bodyArrElBasic.setValue("0");
 		}
-		ApiUserMeasuredvaluesBody[] body = { bodyArrEl };
-
-		StringEntity entity = new StringEntity(new Gson().toJson(body), "utf-8");
-		entity.setContentEncoding("UTF-8");
-		entity.setContentType("application/json");
-		request.setEntity(entity);
-
-		HttpClient httpClient = hack.getClient();
-
-		HttpResponse httpResponse = httpClient.execute(request);
+		ApiUserMeasuredvaluesBody[] body = { bodyArrElBasic };
+		String jsonPayload= new Gson().toJson(body);
+		
+		HttpResponse httpResponse = doPostForUser(jsonPayload, "/api/user/measuredvalues");
+		
 		switch (httpResponse.getStatusLine().getStatusCode()) {
+		case 201:
+			logger.info("Result sent to Selfcare");
+			break;
+		case 400:
+			logger.log(Level.SEVERE, "Bad request (when 0 values are added)");
+		case 500:
+			logger.log(Level.SEVERE, "Error inside of Selfcare server...");
+		default:
+			throw new Exception();
+		}
+		
+		logger.info("Sending complex game result to Selfcare");
+		ApiUserMeasuredvaluesBody bodyArrElComplex = new ApiUserMeasuredvaluesBody();
+		bodyArrElComplex.setActivity("Game: Rock Paper Scissors");
+		bodyArrElComplex.setSensorTypeId(settings.getSensorTypeIdByName("Rock Paper Scissors Game Session"));
+		bodyArrElComplex.setTimestamp(DateFormatter.toSelfcareDateTime(endDate));
+		bodyArrElComplex.setValue(new Gson().toJson(rps));
+		
+		ApiUserMeasuredvaluesBody[] bodyComplex = { bodyArrElComplex };
+		String jsonPayloadComplex= new Gson().toJson(bodyComplex);
+		
+		HttpResponse httpResponseComplex = doPostForUser(jsonPayloadComplex, "/api/user/storedvalues");
+		
+		switch (httpResponseComplex.getStatusLine().getStatusCode()) {
 		case 201:
 			logger.info("Result sent to Selfcare");
 			break;
@@ -334,6 +361,22 @@ public class GameV7 {
 
 	}
 
+	private HttpResponse doPostForUser(String jsonPayload, String relativeURL) throws Exception, IOException, ClientProtocolException {
+		HttpPost request = new HttpPost(settings.getSelfcareApiBaseURL() + relativeURL);
+		request.addHeader("Content-Type", "application/json");
+		request.addHeader("Authorization", "Bearer " + settings.getSelfcareAccessToken());		
+
+		StringEntity entity = new StringEntity(jsonPayload, "utf-8");
+		entity.setContentEncoding("UTF-8");
+		entity.setContentType("application/json");
+		request.setEntity(entity);
+
+		HttpClient httpClient = hack.getClient();
+
+		HttpResponse httpResponse = httpClient.execute(request);
+		return httpResponse;
+	}
+
 	private enum GameResult {
 		UNDECIDED, P1WON, P2WON, TIE
 	}
@@ -342,10 +385,32 @@ public class GameV7 {
 		try {
 			GameV7 game = new GameV7();
 			game.doGame();
+			game.dumpUserData();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 
+	}
+
+	/**
+	 * Dump user data to log (info level)
+	 * @throws Exception 
+	 */
+	private void dumpUserData() throws Exception {		
+		String url= settings.getSelfcareApiBaseURL() + "/api/user/measuredvalues";
+		logger.info("Getting basic sensor data via " + url);
+		HttpGet request = new HttpGet(url);
+		request.addHeader("Authorization", "Bearer " + settings.getSelfcareAccessToken());
+		HttpClient httpClient = hack.getClient();
+		HttpResponse httpResponse = httpClient.execute(request);
+		
+		if (httpResponse.getStatusLine().getStatusCode() == 200) {
+			String res = EntityUtils.toString(httpResponse.getEntity());
+			//TODO ApiSensortypesResponse[] sensorTypes = new Gson().fromJson(res, ApiSensortypesResponse[].class);			
+		} else {
+			logger.log(Level.SEVERE, "Reading of Sensor Data failed");
+			throw new Exception();
+		}
 	}
 
 	/**

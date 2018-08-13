@@ -17,5 +17,6 @@ public class RockPaperScissorsGame extends GameSession {
     /**
      * represents the currentTimeMillis at the time the game was completed/ended
      */
-    private long endTimeMS; 
+    private long endTimeMS;
+     
 }
