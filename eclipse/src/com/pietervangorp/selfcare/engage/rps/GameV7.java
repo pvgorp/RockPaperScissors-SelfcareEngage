@@ -18,6 +18,7 @@ import java.util.TimeZone;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.pietervangorp.selfcare.engage.exceptions.NoConsentException;
+import com.pietervangorp.selfcare.engage.exceptions.NoSuchSensorException;
 import com.pietervangorp.selfcare.engage.rps.ai.AutomaticPlayer;
 import com.pietervangorp.selfcare.engage.rps.ai.AutomaticPlayerV2;
 import com.pietervangorp.selfcare.engage.rps.items.Item;
@@ -238,7 +239,7 @@ public class GameV7 {
 	 * @throws Exception
 	 */
 	private ApiSensortypesResponse[] loadSensorTypesFrom(String url) throws Exception {		
-		logger.info("Getting basic sensor types code via " + url);
+		logger.info("Getting sensor types code via " + url);
 		HttpGet request = new HttpGet(url);
 		request.addHeader("Authorization", "Bearer " + settings.getSelfcareAccessToken());
 
@@ -408,10 +409,16 @@ public class GameV7 {
 		cal.add(Calendar.DATE, +2);
 		Date tomorrow= cal.getTime();
 		
+		dumpValuesForURL(yesterday, tomorrow, "/api/user/measuredvalues", "gewonnen?");		
+		dumpValuesForURL(yesterday, tomorrow, "/api/user/storedvalues", "Rock Paper Scissors Game Session");
+	}
+
+	private void dumpValuesForURL(Date from, Date to, String relativeURL, String sensorName)
+			throws NoSuchSensorException, Exception, IOException, ClientProtocolException {
 		String url= settings.getSelfcareApiBaseURL() 
-					+ "/api/user/measuredvalues?startdate="+DateFormatter.toSelfcareDateTime(yesterday)
-					+"&enddate="+DateFormatter.toSelfcareDateTime(tomorrow)
-					+"&sensortypeid="+settings.getSensorTypeIdByName("gewonnen?");
+					+ relativeURL+"?startdate="+DateFormatter.toSelfcareDateTime(from)
+					+"&enddate="+DateFormatter.toSelfcareDateTime(to)
+					+"&sensortypeid="+settings.getSensorTypeIdByName(sensorName);
 		
 		logger.info("Getting basic sensor data via " + url);
 		HttpGet request = new HttpGet(url);
@@ -421,8 +428,19 @@ public class GameV7 {
 		
 		if (httpResponse.getStatusLine().getStatusCode() == 200) {
 			String res = EntityUtils.toString(httpResponse.getEntity());
-			ApiUserMeasuredvaluesResult measuredValues= new Gson().fromJson(res, ApiUserMeasuredvaluesResult.class);
-			logger.info("User data available so far: \n"+new Gson().toJson(measuredValues.getValueList()));
+			if (relativeURL.indexOf("measured")!=-1) {
+				ApiUserMeasuredvaluesResult measuredValues= new Gson().fromJson(res, ApiUserMeasuredvaluesResult.class);
+				logger.info("User data available so far: \n"+new Gson().toJson(measuredValues.getValueList()));
+			} else if (relativeURL.indexOf("stored")!=-1) {
+				SensorValue[] measuredValues= new Gson().fromJson(res, SensorValue[].class);
+				// logger.info("User data available so far: \n"+new Gson().toJson(measuredValues));
+				for (SensorValue complexValue: measuredValues) {
+					if (complexValue.getSensorTypeId().equals(settings.getSensorTypeIdByName("Rock Paper Scissors Game Session"))) {
+						RockPaperScissorsGame rps= new Gson().fromJson(complexValue.getValue(), RockPaperScissorsGame.class);
+						logger.info(" * RPS game from "+new Date(rps.getStartTimeMS())+" with duration "+rps.getDurationMilliSeconds()+" and #iterations "+rps.getNumberOfIterations());
+					}
+				}
+			}
 		} else {
 			logger.log(Level.SEVERE, "Reading of Sensor Data failed");
 			throw new Exception();
